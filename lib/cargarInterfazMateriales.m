@@ -304,12 +304,12 @@ if boton.isSelected
     % mover la ventana principal si no hay suficiente espacio para
     % desplegar la interfaz sin solapar parte de esta
     pantalla = get(0,'screensize');
-    posFigura=handles.figure1.Position;
+    posFigura = handles.figure1.Position;
     if pantalla(3) >= 830+365 && posFigura(1)+830 > pantalla(3)-365
         handles.figure1.Position = [pantalla(3)-830-365,posFigura(2:4)];
     end
     panelTab.setSelectedIndex(0)
-    popup.show(boton,boton.getWidth+25,0)
+    popup.show(boton,boton.getWidth+30,0)
     verLeyesConstitutivas(handles) % mostrar los parámetros actualmente vigentes
 else
     popup.setVisible(false)
