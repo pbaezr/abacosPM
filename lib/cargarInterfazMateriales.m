@@ -79,7 +79,7 @@ grid_op2.anchor = java.awt.GridBagConstraints.NORTHWEST;
 grid_op2.insets = java.awt.Insets(8,0,0,0);
 
 % crear los inputs y sus textos asociados y agregarlos a los sub-sub-paneles correspondientes
-textos1 = {'<html>&epsilon;<sub>f','<html>E<sub>1',...
+textos1 = {'<html>&epsilon;<sub>f','<html>E<sub>s2',...
     '<html>&epsilon;<sub>sh','<html>&epsilon;<sub>su','<html>&epsilon;<sub>f','<html>E<sub>sh','<html>f<sub>su'};
 textos2 = {'','<html>&nbsp; &times; E<sub>s',...
     '','','','<html>&nbsp; &times; E<sub>s','<html>&nbsp; &times; f<sub>y',};
@@ -505,7 +505,7 @@ end
 % y que muestra los valores por defecto de los inputs de los modelos
 function resetearValores(handles)
 inputs = handles.inputsMateriales;
-valores_inputs = {'0.15' '0.01' '0.01' '0.1' '0.15' '0.033' '1.5' '0.002' '0.0038'};
+valores_inputs = {'0.15' '0' '0.01' '0.1' '0.15' '0.033' '1.5' '0.002' '0.0038'};
 for i = 1:9, inputs(i).setText(valores_inputs{i}); end
 
 graficarCurvaAcero(handles)
