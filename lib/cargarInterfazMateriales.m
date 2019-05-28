@@ -8,7 +8,7 @@ function cargarInterfazMateriales(handles,path)
 
 % cargar el directorio donde se encuentra la clase 'JavaAxes'
 folder = fullfile(path,'lib');
-if ~ismember(folder,javaclasspath('-all')) && isempty(which('JavaAxes.class'))
+if ~ismember(folder,javaclasspath('-all')) && isempty(which('JavaAxes'))
     if ~isempty(javaclasspath('-dynamic'))
         warning(['Limpiar las clases Java anteriormente agregadas o ',...
             'crear un ''classpath'' personalizado incluyendo el directorio ',folder]);
