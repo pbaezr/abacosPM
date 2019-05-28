@@ -171,7 +171,7 @@ handles.opcionesHormigon = grupoTab2;
 grid2 = java.awt.GridBagConstraints;
 grid2.anchor = java.awt.GridBagConstraints.NORTHWEST;
 grid2.insets = java.awt.Insets(5,0,0,0);
-grid2.weightx = 0.145;
+grid2.weightx = 0.143;
 panelTopTab2.add(radiopanelTab2,grid2);
 
 % % crear opciones para definir la ley constitutiva del hormigón a tracción
@@ -263,7 +263,7 @@ boton_cancelar = handle(boton_cancelar,'CallbackProperties');
 boton_defecto = handle(boton_defecto,'CallbackProperties');
 
 boton_defecto.setMargin(java.awt.Insets(0,0,0,0));
-panel_botones.setBorder(javax.swing.border.EmptyBorder(0,20,3,20));
+panel_botones.setBorder(javax.swing.border.EmptyBorder(1,20,3,20));
 
 panel_botones.setPreferredSize(java.awt.Dimension(365,30));
 panel_botones.add(boton_guardar);
