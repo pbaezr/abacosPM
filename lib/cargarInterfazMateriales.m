@@ -44,7 +44,7 @@ radiopanel = javax.swing.JPanel;
 radiopanel.setLayout(java.awt.GridLayout(3,1));
 grupo = javax.swing.ButtonGroup;
 
-opcion = {'<html>Elastoplástico' 'Mander'};
+opcion = {['Elastopl',char(225),'stico'] 'Mander'};
 for i = 1:2
     opcionAcero = javaObjectEDT('javax.swing.JRadioButton',opcion{i});    
     opcionAcero.setFont(font);
@@ -247,7 +247,7 @@ graficoHormigon.setPreferredSize(java.awt.Dimension(365,205));
 panelTab2.add(graficoHormigon);
 handles.curvaHormigon = graficoHormigon;
 
-tabgp.addTab('<html>Hormigón', panelTab2);
+tabgp.addTab(['Hormig',char(243),'n'], panelTab2);
 
 %% crear botones y asignar callbacks
 % crear botones para guardar, cancelar y establecer los valores predetermiandos
