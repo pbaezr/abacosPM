@@ -44,7 +44,7 @@ radiopanel = javax.swing.JPanel;
 radiopanel.setLayout(java.awt.GridLayout(3,1));
 grupo = javax.swing.ButtonGroup;
 
-opcion = {'Elastoplástico' 'Mander'};
+opcion = {'<html>Elastoplástico' 'Mander'};
 for i = 1:2
     opcionAcero = javaObjectEDT('javax.swing.JRadioButton',opcion{i});    
     opcionAcero.setFont(font);
@@ -247,7 +247,7 @@ graficoHormigon.setPreferredSize(java.awt.Dimension(365,205));
 panelTab2.add(graficoHormigon);
 handles.curvaHormigon = graficoHormigon;
 
-tabgp.addTab('Hormigón', panelTab2);
+tabgp.addTab('<html>Hormigón', panelTab2);
 
 %% crear botones y asignar callbacks
 % crear botones para guardar, cancelar y establecer los valores predetermiandos
@@ -523,7 +523,7 @@ opcionHormigon = str2double(handles.opcionesHormigon.getSelection.getActionComma
 inputs = handles.inputsMateriales;
 
 % definir los parámetros del acero según el modelo utilizado
-modelosAcero = {'Elastoplástico' 'Mander'};
+modelosAcero = {['Elastopl',char(225),'stico'] 'Mander'};
 parametros.modeloAcero = {opcionAcero modelosAcero{opcionAcero}};
 if opcionAcero == 1
     parametros.ef = str2double(inputs(1).getText);
@@ -544,14 +544,14 @@ parametros.e0 = str2double(inputs(8).getText);
 if opcionHormigon ~= 1, parametros.eu = str2double(inputs(9).getText); end
 parametros.fc = handles.input_fc.UserData;
 
-parametros.modeloHormigonTrac = {1 'sin tracción'};
+parametros.modeloHormigonTrac = {1 ['sin tracci',char(243),'n']};
 % modelosHormTrac = {'sin tracción' 'con tracción'};
 % parametros.modeloHormigonTrac = {opcionHormigonTrac modelosHormTrac{opcionHormigonTrac}};
 
 % almacenar los nuevos parámetros definidos
 setappdata(handles.figure1,'parametrosMateriales',parametros);
 handles.text48.String = ['Acero: ',parametros.modeloAcero{2}];
-handles.text49.String = ['Hormigón: ',parametros.modeloHormigon{2},', ',parametros.modeloHormigonTrac{2}];
+handles.text49.String = ['Hormig',char(243),'n: ',parametros.modeloHormigon{2},', ',parametros.modeloHormigonTrac{2}];
 
 % recalcular el diagrama PM con los nuevos parámetros para las leyes constitutivas de los materiales
 graficarDiagramas(handles)
