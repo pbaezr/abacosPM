@@ -71,12 +71,12 @@ tolerancia = 1000*tolerancia; % conversion de kN a N
 % inicializar los parametros de la iteracion
 dp = 0; % error inicial considerado
 eo = 0; % deformacion unitaria inicial considerada (en h/2)
-J0 = Ecc*b*h+2*Es1*sum((1-ys/h).*As);    
+J0 = Ecc*b*h+2*Es1*sum((1-ys/h).*As);
+k = 1;
 
 % iteraciones
 i  = 1;
 J = J0;
-suma = 0;
 while i <= np
     error = tolerancia+1; % para entrar en un nuevo ciclo de iteraciones para la carga axial sig.
     numIteraciones = 0; % contador de iteraciones
