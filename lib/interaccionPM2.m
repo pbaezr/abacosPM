@@ -216,7 +216,7 @@ end
 end
 
 % funcion que asegura que el diagrama llegue a M=0 al interpolar (o extrapolar) para P
-function [M,P,phi_red,et,c] = cerrarDiagrama(M,P,phi_red,et,c,incluirRamaTraccion,parametros,Pmin,Pmax)
+function [M,P,phi_red,et,c] = cerrarDiagrama(M,P,phi_red,et,c,incluirRamaTraccion)
 % limite compresion maxima
 Pmax = interp1(M(P>0),P(P>0),0,'linear','extrap');
 
