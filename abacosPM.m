@@ -1,10 +1,10 @@
 function varargout = abacosPM(varargin)
 % ABACOSPM es una interfaz de usuario que permite calcular los diagramas
-% de interacción P-M de una sección rectangular de hormigón armado y
-% determinar el área requerida de acero en función de la geometría y los
-% esfuerzos últimos.
+% de interaccion P-M de una seccion rectangular o circular de hormigon armado y
+% determinar el area requerida de acero en funcion de la geometria y los
+% esfuerzos ultimos.
 
-% Licenciado bajos los términos del MIT.
+% Licenciado bajos los terminos del MIT.
 % Copyright (c) 2019 Pablo Baez R.
 
 % Begin initialization code - DO NOT EDIT
@@ -31,6 +31,7 @@ function abacosPM_OpeningFcn(hObject, ~, handles, varargin)
 movegui(handles.figure1,'center')
 
 path = pwd;
+addpath(path)
 if isdeployed, path = fileparts(mfilename('fullpath')); end
 addpath(fullfile(path,'lib'))
 
@@ -45,10 +46,10 @@ handles.ecuacion_cuantia = {'$$\rho_g = \frac{A_s}{A_g} = \frac{A_s}{b\times h}$
     '$$\rho = \frac{A_s}{b\times L_b} = \frac{A_s}{b\times L\times(1-\gamma)}$$'
     '$$\rho_g = \frac{A_s}{A_g} = \frac{A_s}{b\times L}$$'};
 
-% definición de variable que indica si los datos ingresados son válidos
+% definicion de variable que indica si los datos ingresados son validos
 handles.datosValidos = true;
 
-% creación de labels (los "static texts" de Matlab no permiten el uso de html...)
+% creacion de labels (los "static texts" de Matlab no permiten el uso de html...)
 textos(1) = javacomponent(javax.swing.JLabel('<html>f''<sub>c'),[10 45 23 15],handles.uipanel1);
 textos(2) = javacomponent(javax.swing.JLabel('<html>f<sub>y'),[10 15 23 15],handles.uipanel1);
 
@@ -66,12 +67,12 @@ textos(8) = javacomponent(javax.swing.JLabel('<html><i>&rho;</i><sub>g'),[10 46 
 textos(9) = javacomponent(javax.swing.JLabel('<html>A<sub>s'),[10 17 23 15],handles.uipanel3);
 handles.texto_rho = textos(8);
 
-% estandarización de fuente (segoe ui de 11px)
+% estandarizacion de fuente (segoe ui de 11px)
 for i = 1:length(textos), textos(i).setFont(java.awt.Font('segoe ui',0,11)); end
 
-% creación y personalización de los outputs
+% creacion y personalizacion de los outputs
 outputs = {'output_rho','output_As'};
-tooltips = {[] '<html>área total de acero requerido<br>(dividir por 2 para obtener lo de cada borde)'};
+tooltips = {[] '<html>area total de acero requerido<br>(dividir por 2 para obtener lo de cada borde)'};
 pos = [33 45 49 21];
 for i = 1:2
     handles.(outputs{i}) = javacomponent(javax.swing.JLabel(''),pos,handles.uipanel3);
@@ -83,18 +84,18 @@ for i = 1:2
     pos = pos-[0 30 0 0];
 end
 
-% definición de parámetros iniciales para las curvas tensión-deformación de los materiales
-parametros.modeloAcero = {1 'Elastoplástico'};
+% definicion de parametros iniciales para las curvas tension-deformacion de los materiales
+parametros.modeloAcero = {1 'Elastoplastico'};
 parametros.fy = 420;
 parametros.ef = 0.15;
 parametros.Es2 = 0;
 parametros.modeloHormigon = {1 'Saenz'};
 parametros.fc = 30;
 parametros.e0 = 0.002;
-parametros.modeloHormigonTrac = {1 'sin tracción'};
+parametros.modeloHormigonTrac = {1 'sin traccion'};
 setappdata(handles.figure1,'parametrosMateriales',parametros); %handles.parametros = parametros;
 
-% creación de figuras explicativas de los inputs
+% creacion de figuras explicativas de los inputs
 axes(handles.axes2) % columna
 tipoMarcador = {'o','color','k','markerfacecolor','k','tag','fierros'};
 grid on, hold on, axis off, axis equal
@@ -122,6 +123,31 @@ annotation(handles.uipanel5,'doublearrow',[0.195 0.195],[0.22 0.74],tipoFlecha{:
 annotation(handles.uipanel5,'doublearrow',[0.745 0.745],[0.31 0.66],tipoFlecha{:})
 annotation(handles.uipanel5,'doublearrow',[0.27 0.67],[0.12 0.12],tipoFlecha{:})
 annotation(handles.uipanel5,'arrow',[0.92 0.9],[0.55 0.57],'headwidth',5,'headlength',3,'headstyle','vback3')
+
+axes(handles.axes7) % columna circular
+grid on, hold on, axis off, axis equal
+
+plot([-0.7 1],-0.03*[1 1],'color',0.7*[1 1 1])
+plot([-0.7 1],[2 2],'color',0.7*[1 1 1])
+plot([1 2.7],[1.66 1.66],'color',0.7*[1 1 1])
+plot([1 2.7],[0.33 0.33],'color',0.7*[1 1 1])
+
+alfa = linspace(0,2*pi);
+alfa2 = linspace(0,2*pi,9);
+plot(1+cos(alfa),1+sin(alfa),'color','k','linewidth',1.5)
+plot(1+0.665*cos(alfa2),1+0.665*sin(alfa2),'o','color','k','markerfacecolor','k','markersize',4)
+
+xlim([-0.6 3])
+ylim([-0.7 2])
+
+text(-0.77,1.1,'h','fontsize',7.5)
+text(2.55,1.1,'\gammah','fontsize',7.5)
+text(1,1,'A_s','fontsize',6.5,'horizontalalignment','center')
+text(3.3,1.1,')','fontsize',10)
+
+annotation(handles.uipanel8,'doublearrow',[0.195 0.195],[0.22 0.74],tipoFlecha{:})
+annotation(handles.uipanel8,'doublearrow',[0.745 0.745],[0.31 0.66],tipoFlecha{:})
+annotation(handles.uipanel8,'arrow',[0.92 0.9],[0.55 0.57],'headwidth',5,'headlength',3,'headstyle','vback3')
 
 axes(handles.axes5) % muro
 grid on, hold on, axis off, axis equal
@@ -153,7 +179,7 @@ handles.flecha_gamma = annotation(handles.uipanel7,'doublearrow',[0.18 0.82],[0.
 annotation(handles.uipanel7,'doublearrow',[0.12 0.88],[0.55 0.55],tipoFlecha{:})
 annotation(handles.uipanel7,'arrow',[0.45 0.43],[0.68 0.66],'headwidth',5,'headlength',3,'headstyle','vback3')
 
-% crear un botón y asociarlo a la definición de las leyes constitutivas de los materiales
+% crear un boton y asociarlo a la definicion de las leyes constitutivas de los materiales
 [handles.boton,~]=javacomponent(javax.swing.JToggleButton('Leyes Constitutivas'),[7 127 125 25],handles.uipanel2);
 handles.boton.setFont(java.awt.Font('Segoe ui',0,11));
 handles.boton.setMargin(java.awt.Insets(0,0,0,0));
@@ -181,7 +207,7 @@ verificarInput(hObject,handles,1,@(x)x>=0,...
 
 function input_n_Callback(hObject, ~, handles)
 verificarInput(hObject,handles,1,@(x)rem(x,1) == 0 && x > 0,...
-    'El valor ingresado (directamente o mediante el uso de funciones) debe ser un número entero positivo.')
+    'El valor ingresado (directamente o mediante el uso de funciones) debe ser un numero entero positivo.')
 
 function input_error_Callback(hObject, ~, handles)
 verificarInput(hObject,handles,10,@(x)x>0,...
@@ -201,7 +227,7 @@ verificarInput2(hObject,handles,10,@(x)x>=0,...
 
 function input_Pu_Callback(hObject, ~, handles)
 verificarInput2(hObject,handles,10,@(x)isreal(x),...
-    'El valor ingresado (directamente o mediante el uso de funciones) debe ser un número real.')
+    'El valor ingresado (directamente o mediante el uso de funciones) debe ser un numero real.')
 
 function verificarInput(hObject,handles,factorConversion,condicion,mensajeError)
 hObject.UserData = [];
@@ -238,14 +264,14 @@ catch
 end
 
 function input_fc_Callback(hObject, ~, handles)
-fc = [16 20:5:55]; % valores de f'c en MPa más usuales
+fc = [16 20:5:55]; % valores de f'c en MPa mas usuales
 hObject.UserData = fc(hObject.Value);
 setappdata(handles.figure1,'parametrosMateriales',...
     setfield(getappdata(handles.figure1,'parametrosMateriales'),'fc',hObject.UserData))
 graficarDiagramas(handles)
 
 function input_fy_Callback(hObject, ~, handles)
-fy = [280 420]; % valores de fy en MPa típicos para el acero utilizado en hormigón armado
+fy = [280 420]; % valores de fy en MPa tipicos para el acero utilizado en hormigon armado
 hObject.UserData = fy(hObject.Value);
 setappdata(handles.figure1,'parametrosMateriales',...
     setfield(getappdata(handles.figure1,'parametrosMateriales'),'fy',hObject.UserData))
@@ -264,9 +290,9 @@ if ~isempty(strfind(eventdata.Key,'arrow'))
 end
 
 function uibuttongroup1_SelectionChangedFcn(~, ~, handles)
-% dejar por defecto siempre la primera sub-opción
+% dejar por defecto siempre la primera sub-opcion
 handles.radiobutton5.Value = 1;
-% borrar inputs asociados al cálculo de As
+% borrar inputs asociados al calculo de As
 inputs = {'input_b','input_h','input_Mu','input_Pu'};
 for i = 1:4
     handles.(inputs{i}).String = '';
@@ -276,22 +302,25 @@ uibuttongroup3_SelectionChangedFcn(handles.radiobutton5, [], handles)
 
 function uibuttongroup3_SelectionChangedFcn(hObject, ~, handles)
 
-% determinar si se escogió la opción 'Columna'
+% determinar si se escogio la opcion 'Columna'
 flag = handles.radiobutton1.Value == 1;
 
-% mostrar y ocultar elementos según corresponda
+% mostrar y ocultar elementos segun corresponda
 flags={'off' 'on'};
+handles.uibuttongroup4.Visible = 'off';
+handles.input_b.Enable = 'on';
 handles.input_gamma.Visible = 'on';
 handles.texto_rho_w.Visible = 'off';
 handles.texto_gamma.Visible = 'on';
 handles.radiobutton7.Visible = flags{flag+1};
 handles.uipanel5.Visible = flags{flag+1};
 handles.uipanel7.Visible = flags{~flag+1};
+handles.uipanel8.Visible = 'off';
 handles.input_rho_w.Visible = flags{~flag+1};
 handles.input_As2.Visible = flags{~flag+1};
 handles.texto_rho.setText('<html><i>&rho;</i><sub>g')
 handles.output_rho.setToolTipText([])
-handles.output_As.setToolTipText('<html>área total de acero requerido<br>(dividir por 2 para obtener lo de un borde)')
+handles.output_As.setToolTipText('<html>area total de acero requerido<br>(dividir por 2 para obtener lo de un borde)')
 
 sub_opcion = hObject.UserData;
 if flag % columna
@@ -303,7 +332,7 @@ if flag % columna
     handles.texto_gamma.Position = [10 96 23 15];
     handles.input_gamma.Position = [33 93 49 21];    
     
-    % trazar esquema explicativo según la sub opción escogida
+    % trazar esquema explicativo segun la sub opcion escogida
     axes(handles.axes2)
     tipoMarcador1 = {'o','color','k','markerfacecolor','k','markersize',4,'tag','fierros'};
     if sub_opcion == 1
@@ -311,10 +340,13 @@ if flag % columna
     elseif sub_opcion == 2
         plot([0.33*[1 1 1 1] 1.66*[1 1 1 1]],0.33+1.33/3*[0 1 2 3 0 1 2 3],tipoMarcador1{:})
     else%if sub_opcion == 3
-        handles.output_As.setToolTipText('área total de acero requerido')
+    handles.uibuttongroup4.Visible = 'on';
+        handles.uibuttongroup4.UserData = 1;
+        handles.checkbox3.Value = 1;
+        handles.radiobutton12.Value = 0;
+        handles.output_As.setToolTipText('area total de acero requerido')
         plot(0.33+1.33/3*[0 1 2 3 0 1 2 3],[0.33*[1 1 1 1] 1.66*[1 1 1 1]],tipoMarcador1{:})
-        plot([0.33*[1 1] 1.66*[1 1]],0.33+1.33/3*[1 2 1 2],tipoMarcador1{:})
-        
+        plot([0.33*[1 1] 1.66*[1 1]],0.33+1.33/3*[1 2 1 2],tipoMarcador1{:})        
     end
 
 else% handles.radiobutton2.Value == 1 % muro
@@ -333,7 +365,7 @@ else% handles.radiobutton2.Value == 1 % muro
     lineas = findobj(handles.axes5,'type','line','tag','borde_As');
     for i = 1:4, lineas(i).Visible = flags{3-sub_opcion}; end
     
-    % trazar esquema explicativo según la sub opción escogida    
+    % trazar esquema explicativo segun la sub opcion escogida    
     axes(handles.axes5)
     tipoMarcador2 = {'o','color','k','markerfacecolor','k','markersize',1,'tag','fierros'};
     if sub_opcion == 1
@@ -342,8 +374,8 @@ else% handles.radiobutton2.Value == 1 % muro
         plot(0.175+0.05*(0:13),0.05*ones(1,14),tipoMarcador2{:})
         plot(0.175+0.05*(0:13),0.15*ones(1,14),tipoMarcador2{:})
         handles.texto_rho.setText('<html><i>&rho;')
-        handles.output_rho.setToolTipText('cuantía del elemento de borde')
-        handles.output_As.setToolTipText('área de acero requerida para un solo borde')
+        handles.output_rho.setToolTipText('cuantia del elemento de borde')
+        handles.output_As.setToolTipText('area de acero requerida para un solo borde')
     elseif sub_opcion == 2
         plot(0.175+0.05*(-3:16),0.05*ones(1,20),tipoMarcador2{:})
         plot(0.175+0.05*(-3:16),0.15*ones(1,20),tipoMarcador2{:})
@@ -354,3 +386,26 @@ else% handles.radiobutton2.Value == 1 % muro
     end
 end
 graficarDiagramas(handles) % recalcular diagramas
+
+% opcion columna rectangular
+function checkbox3_Callback(hObject, ~, handles)
+hObject.Value = 1;
+handles.radiobutton12.Value = 0;
+handles.uipanel5.Visible = 'on';
+handles.uipanel8.Visible = 'off';
+if handles.uibuttongroup4.UserData == 2
+    handles.input_b.Enable = 'on';
+    handles.uibuttongroup4.UserData = 1;    
+    graficarDiagramas(handles)
+end
+
+% opcion columna circular
+function radiobutton12_Callback(~, ~, handles)
+handles.checkbox3.Value = 0;
+handles.uipanel5.Visible = 'off';
+handles.uipanel8.Visible = 'on';
+if handles.uibuttongroup4.UserData == 1
+    handles.input_b.Enable = 'off';
+    handles.uibuttongroup4.UserData = 2;    
+    graficarDiagramas(handles)
+end
