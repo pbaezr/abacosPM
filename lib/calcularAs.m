@@ -25,7 +25,7 @@ if handles.datosValidos
     Mu = handles.input_Mu.UserData;
     Pu = handles.input_Pu.UserData;
     
-    if ~isempty(b) && ~isempty(h) && ~isempty(Mu) && ~isempty(Pu)        
+    if (~isempty(b) || strcmp(handles.input_b.Enable,'off')) && ~isempty(h) && ~isempty(Mu) && ~isempty(Pu)        
         axes(handles.axes1)
         
         % si la carga axial es negativa (traccion), trazar nuevamente los diagramas para incluir la rama con P<0
@@ -41,11 +41,23 @@ if handles.datosValidos
             ylim([handles.ymin ylims(2)])
         elseif handles.ymin < 0
             ylim([0 ylims(2)])
-        end 
+        end
+        
+        % determinar si la seccion es circular
+        Ag = b*h;
+        factor = 0.8; % factor de reducion de carga maxima por excentricidad accidental para columnas con estribos
+        phiMin = 0.65; % factor de reducion de resistencia minimo para columnas con estribos
+        if opcion == 3 && handles.uibuttongroup4.UserData == 2 % columna circular
+            opcion = 3.5;
+            Ag = 0.25*pi*h^2;
+            factor = 0.85; % se supone que se usan espirales para confinar la armadura longitudinal
+            phiMin = 0.75; % idem
+            b = Ag/h; % ancho equivalente para una seccion circular
+        end
         
         % transformar Mu y Pu a variables adimensionales e incorporar al grafico
-        xu = 10^6*Mu/(fc*b*h^2);
-        yu = 10^3*Pu/(fc*b*h);        
+        xu = 10^6*Mu/(fc*Ag*h);
+        yu = 10^3*Pu/(fc*Ag);
         plot(xu,yu,'o','markerfacecolor','r','tag','punto')
         
         % determinar cual es la curva mas cercana al par (xu,yu)
@@ -86,16 +98,16 @@ if handles.datosValidos
                 phi = 0.9;
             elseif inpolygon(xu,yu,[0 lim_phi_065.XData xmax xmax 0],...
                     [lim_phi_065.YData(1) lim_phi_065.YData lim_phi_065.YData(end) ymin ymin])
-                caso = 2; % zona de transicion (0.65 < phi < 0.9)
-                phi = 0.9:-0.005:0.65;
+                caso = 2; % zona de transicion (phiMin < phi < 0.9)
+                phi = 0.9:-0.001:phiMin;
             else
                 caso = 3; % control por compresion
-                phi = 0.65;
+                phi = phiMin;
             end            
             
             % iterar para calcular rho y su diagrama correspondiente
             parametros = getappdata(handles.figure1,'parametrosMateriales');
-            if caso ~=3 || handles.radiobutton1.Value == 0 || ~inpolygon(xu,yu,[0 handles.xlim_08Pmax 0],...
+            if caso ~= 3 || handles.radiobutton1.Value == 0 || ~inpolygon(xu,yu,[0 handles.xlim_08Pmax 0],...
                     [handles.ylim_08Pmax(1) handles.ylim_08Pmax handles.ylim_08Pmax(end)])
                 
                 % definir cargas axiales nominales para calcular los diagramas PM                
@@ -115,7 +127,7 @@ if handles.datosValidos
                 while abs(error) > tol
                     rho = rho+dAs/(b*l);
                     [As,ys] = distribuirAs(b,h,opcion,gamma,rho,rho_w);
-                    [M,P,phi_red] = interaccionPM2(b,h,As,ys,parametros,n,tol,false,Pitera);
+                    [M,P,phi_red] = interaccionPM2(b,h,As,ys,parametros,n,tol,false,opcion == 3.5,Pitera);
                     
                     % determinar el indice para el cual Pu = phi*P
                     if caso == 2, [~,ind] = min(abs(Pu-phi_red.*P)); end
@@ -146,29 +158,29 @@ if handles.datosValidos
                 end
                 
                 % calcular y trazar el diagrama para la cuantia y As previamente determinadas
-                [M,P,phi_red] = interaccionPM2(b,h,As,ys,parametros,n,tol,incluirTraccion);
-                xobj = 10^6*phi_red.*M/(fc*b*h^2);
-                yobj = 10^3*phi_red.*P/(fc*b*h);
+                [M,P,phi_red] = interaccionPM2(b,h,As,ys,parametros,n,tol,incluirTraccion,opcion == 3.5);
+                xobj = 10^6*phi_red.*M/(fc*Ag*h);
+                yobj = 10^3*phi_red.*P/(fc*Ag);
                 
                 % si el elemento es una columna, identificar el limite superior de
                 % compresion por concepto de la excentricidad accidental
                 if handles.radiobutton1.Value == 1
-                    Pnmax = (0.85*fc*(b*h-sum(As))+fy*sum(As))*10^-3;
-                    [~,ind08Pmax] = min(abs(P-0.8*Pnmax));                        
+                    Pnmax = (0.85*fc*(Ag-sum(As))+fy*sum(As))*10^-3;
+                    [~,ind08Pmax] = min(abs(P-factor*Pnmax));                        
                     plot([xobj(1:ind08Pmax) 0],[yobj(1:ind08Pmax) yobj(ind08Pmax)],'r','tag','solucion')
                 else
                     plot(xobj,yobj,'r','tag','solucion')
                 end
-            else % para columnas con Pu = 0.8*phi*Pnmax no es necesario iterar
-                rho = ((10^3*Pu/0.8/0.65 -0.85*fc*b*h)/(fy-0.85*fc))/(b*h);
+            else % para columnas con Pu = factor*phiMin*Pnmax no es necesario iterar
+                rho = (10^3*Pu/(factor*phiMin*Ag) -0.85*fc)/(fy-0.85*fc);
                 [As,ys] = distribuirAs(b,h,opcion,gamma,rho,rho_w);
-                [M,P,phi_red] = interaccionPM2(b,h,As,ys,parametros,n,tol,incluirTraccion);                
+                [M,P,phi_red] = interaccionPM2(b,h,As,ys,parametros,n,tol,incluirTraccion,opcion == 3.5);                
                 
-                xobj = 10^6*phi_red.*M/(fc*b*h^2);
-                yobj = 10^3*phi_red.*P/(fc*b*h);
+                xobj = 10^6*phi_red.*M/(fc*Ag*h);
+                yobj = 10^3*phi_red.*P/(fc*Ag);
                 
-                Pnmax = (0.85*fc*(b*h-sum(As))+fy*sum(As))*10^-3;
-                [~,ind08Pmax] = min(abs(P-0.8*Pnmax));
+                Pnmax = (0.85*fc*(Ag-sum(As))+fy*sum(As))*10^-3;
+                [~,ind08Pmax] = min(abs(P-factor*Pnmax));
                 plot([xobj(1:ind08Pmax) 0],[yobj(1:ind08Pmax) yobj(ind08Pmax)],'r','tag','solucion')
             end
 
