@@ -1,4 +1,4 @@
-function [M,P,phi_red,et,c] = interaccionPM2(b,h,As,ys,parametros,n,tolerancia,incluirRamaTraccion,varargin)
+function [M,P,phi_red,et,c] = interaccionPM2(b,h,As,ys,parametros,n,tolerancia,incluirRamaTraccion,usarCirculo,varargin)
 %
 % Variables de salida:
 %   -M: vector fila con los momentos nominales asociados a cada carga axial (en kN*m)
@@ -11,13 +11,15 @@ function [M,P,phi_red,et,c] = interaccionPM2(b,h,As,ys,parametros,n,tolerancia,i
 %
 % Variables de entrada:
 %   -b: ancho de la seccion rectangular (en mmm)
-%   -h: altura de la seccion rectangular (en mmm)
+%   -h: altura de la seccion rectangular o diametro si es circular (en mmm)
 %   -As: vector fila con las areas de refuerzo por cada capa (en mmm^2)
 %   -ys: vector fila con la ubicacion del centroide de cada capa de rufuerzo medida desde un borde (en mmm)
 %   -parametros: estructura que contiene los parametros que definen las leyes constitutivas de los materiales
 %   -n: numero de segmentos en que se dividira la seccion (debe ser un entero positivo)
 %   -tolerancia: error permitido en la sumatoria de fuerzas (en kN)
 %   -incluirRamaTraccion: valor logico (true o false) que indica si se incluye en el diagrama la rama para P < 0
+%   -usarCirculo: valor logico (true o false) denotando si la seccion es circular y no rectangular
+%       (por defecto se considera una seccion rectangular)
 %   -varargin: vector con las cargas axiales (nominales) para las cuales se desea calcular el diagrama (en kN)
 
 % parametros de los materiales
@@ -32,6 +34,19 @@ eu = 0.003; % deformacion maxima para la cual se estima la resistencia de la sec
 dy = h/n; % altura de segmento
 y = dy/2:dy:h-dy/2; % distancia a cada segmento (en sus centros) medida desde el borde inferior de la seccion
 
+if ~usarCirculo
+    bi = b*ones(1,n);
+    Ag = b*h;
+    usarEspirales = false;
+else
+    R = h/2;
+    Ag = pi*R^2;
+    thetai = 2*real(acos(1-(y+0.5*dy)/R));
+    bi1 = 0.5*R^2*(thetai(1)-sin(thetai(1)))/dy;
+    bi = [bi1 diff(0.5*R^2*(thetai-sin(thetai)))/dy];
+    usarEspirales = true;
+end
+
 % definicion del rango de muestra para las cargas axiales
 if ~isempty(varargin) % cargas definidas por el usuario
     P = 10^3*varargin{1}; % conversion de kN a N
@@ -40,11 +55,11 @@ if ~isempty(varargin) % cargas definidas por el usuario
 else
     np = 500;
     Pmin = -fy*sum(As);    
-    Pmax = 0.85*fcc*(b*h-sum(As))+fy*sum(As);
+    Pmax = 0.85*fcc*(Ag-sum(As))+fy*sum(As);
     factorPmin = 0;
     if incluirRamaTraccion
-        % exageradamente se supone que la tracción pura ocurre cuando la
-        % tensión es máxima
+        % exageradamente se supone que la traccion pura ocurre cuando la
+        % tension es maxima
         if parametros.modeloAcero{1} == 1
             factorPmin = 1+parametros.Es2/ey*(parametros.ef-ey);
         else
@@ -52,7 +67,7 @@ else
         end
         np = 1000;
     end    
-    P = sort([linspace(factorPmin*Pmin,1.15*Pmax,np-1) 0.8*Pmax]);
+    P = sort([linspace(factorPmin*Pmin,1.15*Pmax,np-1) [0.8 0.85]*Pmax]);
     cargasDefinidas = false;
 end
 
@@ -71,7 +86,7 @@ tolerancia = 1000*tolerancia; % conversion de kN a N
 % inicializar los parametros de la iteracion
 dp = 0; % error inicial considerado
 eo = 0; % deformacion unitaria inicial considerada (en h/2)
-J0 = Ecc*b*h+2*Es1*sum((1-ys/h).*As);
+J0 = Ecc*Ag+2*Es1*sum((1-ys/h).*As);
 k = 1;
 
 % iteraciones
@@ -95,7 +110,7 @@ while i <= np
 
         % calculo de tensiones, rigideces tangentes, fuerzas y brazos de palanca en cada segmento de hormigon
         [fc,Ec] = curvaHormigon(e,parametros);
-        Fc = fc*b*dy;
+        Fc = fc.*bi*dy;
 
         % calculo de tensiones del hormigon en las zonas donde esta distribuida la armadura
         % (para cuantias de acero pequenas este calculo es poco relevante)
@@ -109,7 +124,7 @@ while i <= np
         % actualizar rigidez J para nueva iteracion
         if numIteraciones < 11            
             Janterior = J; % almacenar J de la iteracion previa para comparar
-            J = 2*sum(Ec.*(1-y/h))*b*dy+2*sum(Es.*(1-ys/h).*As);
+            J = 2*sum(Ec.*(1-y/h).*bi)*dy+2*sum(Es.*(1-ys/h).*As);
             if J == Janterior % obviar carga y reiniciar los parametros de iteracion
                 J = J0;
                 indSaltoP(k) = i;
@@ -132,7 +147,7 @@ while i <= np
         phi(i) = 2*(eu-eo)/h;
         c(i) = eu/phi(i);
         et(i) = eo+phi(i)*(min(ys)-h/2); % deformacion unitaria en el acero a traccion para cada curvatura
-        phi_red(i) = phiFactor(abs(et(i)),ey);
+        phi_red(i) = phiFactor(et(i),ey,usarEspirales);
     end
     
     i = i+1;
@@ -174,8 +189,17 @@ end
 %             fs = curvaAcero(es,parametros);
 %             Fs = fs.*As;
 % 
-%             % calculo de la contribucion total del hormigon a compresion
-%             Fc = 0.85*fcc*b*a;
+%             % calculo de la contribucion total del hormigon a compresion y y su brazo de palanca
+%             if ~usarCirculo
+%                 Fc = 0.85*fcc*b*a;
+%                 yc = h-a/2;
+%             else
+%                 theta = 2*real(acos(1-a/R));
+%                 Ac = 0.5*R^2*(theta-sin(theta));    
+%                 Fc = 0.85*fcc*Ac;
+%                 yc = R+(2/3)*(R*sin(theta/2))^3/Ac;
+%                 b = Ac/a; % ancho equivalente para el bloque de compresion
+%             end
 % 
 %             % calculo de tensiones del hormigon en las zonas donde esta distribuida la armadura
 %             % (para cuantias de acero pequenas este calculo es poco relevante)
@@ -192,18 +216,20 @@ end
 %         end
 % 
 %         % Resultados para la carga P(i)
-%         M(i) = (sum(Fs.*ys)+Fc*(h-a/2)-sum(Fc_ficticia.*ys)-P(i)*h/2)*10^-6; % momento resultante en kN*m        
+%         M(i) = (sum(Fs.*ys)+Fc*yc-sum(Fc_ficticia.*ys)-P(i)*h/2)*10^-6; % momento resultante en kN*m        
 %         c(i) = a/beta1;
 %         phi(i) = eu/c(i);
 %         et(i) = phi(i)*(h-min(ys)-c(i)); % deformacion unitaria en el acero a traccion para cada curvatura
-%         phi_red(i) = phiFactor(abs(et(i)),ey);
+%         phi_red(i) = phiFactor(et(i),ey,usarEspirales);
 %     end    
 % end
 
 % redimensionar vectores excluyendo los datos no validos
+% (se excluyen los momentos negativos dado que para una seccion rectangular
+% o circular armada simetricamente, el diagrama PM tambien es simetrico)
 ind = ~ismember(1:np,indSaltoP) & ~isnan(M) & M~=0 & M>0;
 M = M(ind);
-P = P(ind)/1000; % conversión de N a kN
+P = P(ind)/1000; % conversion de N a kN
 c = c(ind);
 phi_red = phi_red(ind);
 et = et(ind);
@@ -234,21 +260,28 @@ else
     Mmin = [];
 end
 
-% redimensionar vectores incluyendo los límites
+% redimensionar vectores incluyendo los limites
 M = [Mmin M 0];
 c = [-Inf c Inf];
 et = [ett et interp1(P(P>0),et(P>0),Pmax,'linear','extrap')];
-phi_red = [phit phi_red 0.65];
+phi_red = [phit phi_red phi_red(end)];
 P = [Pmin P Pmax];
 end
 
 % funcion que calcula el factor de reduccion de resistencia acorde a la deformacion axial del acero a traccion
-function phi = phiFactor(et,ey)
-if et < ey % compresion controla
-    phi = 0.65;
-elseif et < 0.005 % zona de transicion
-    phi = 0.65+0.25*(et-ey)/(0.005-ey);
-else%if et >= 0.005 % traccion controla
+function phi = phiFactor(et,ey,varargin)
+% et: deformacion unitaria del acero a traccion (negativo para traccion y positivo para compresion)
+% ey: valor absoluto de la deformacion de fluencia
+% varargin: valor logico (true o false) indicando si se usan espirales en
+%   vez de estribos (por defecto se considera el uso de estribos)
+
+phic = 0.65;
+if ~isempty(varargin) && varargin{1},phic = 0.75; end
+if et >= 0 || -et < ey % compresion controla
+    phi = phic;
+elseif -et < 0.005 % zona de transicion
+    phi = phic+(0.9-phic)*(-et-ey)/(0.005-ey);
+else%if -et >= 0.005 % traccion controla
     phi = 0.9;
 end
 end
