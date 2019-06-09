@@ -541,7 +541,11 @@ parametros.fy = handles.input_fy.UserData;
 modelosHormigon = {'Saenz' 'Hognestad' 'Thorenfeldt 1' 'Thorenfeldt 2'};
 parametros.modeloHormigon = {opcionHormigon modelosHormigon{opcionHormigon}};
 parametros.e0 = str2double(inputs(8).getText);
-if opcionHormigon ~= 1, parametros.eu = str2double(inputs(9).getText); end
+if opcionHormigon == 1
+    parametros.eu = 2*parametros.e0;
+else
+    parametros.eu = str2double(inputs(9).getText);
+end
 parametros.fc = handles.input_fc.UserData;
 
 modelosHormTrac = {['sin tracci',char(243),'n'] ['con tracci',char(243),'n']};
