@@ -354,7 +354,7 @@ opcionHormigonTrac = parametros.modeloHormigonTrac; % tipo de curva para la trac
 fcc = parametros.fc; % f'c
 
 e0 = parametros.e0; % deformacion unitaria para la cual se genera el maximo esfuerzo
-ef = parametros.ef; % maxima deformacion unitaria permitida en el hormigon
+eu = parametros.eu; % maxima deformacion unitaria permitida en el hormigon
 
 % inicializar variables
 n = length(e); % numero de segmentos en que se divide la seccion
@@ -376,9 +376,9 @@ for i = 1:n
             if e(i) <= e0 % tramo parabolico ascendente
                 fc(i) = fcc*(2*e(i)/e0-(e(i)/e0)^2);
                 Ec(i) = 2*(fcc/e0)*(1-e(i)/e0);
-            elseif e(i) <= ef % tramo lineal descendente
-                fc(i) = fcc*(1-0.15*(e(i)-e0)/(ef-e0));
-                Ec(i) = -0.15*fcc/(ef-e0);
+            elseif e(i) <= eu % tramo lineal descendente
+                fc(i) = fcc*(1-0.15*(e(i)-e0)/(eu-e0));
+                Ec(i) = -0.15*fcc/(eu-e0);
             else
                 fc(i) = 0;
                 Ec(i) = 0;
@@ -391,8 +391,14 @@ for i = 1:n
             else%if opcionHormigon{1} == 4 % modelo de Thorenfeldt calibrado segun Carreira y Kuang-Han
                 r = 1.55+(fcc/32.4)^3;
             end
-            fc(i) = fcc*r*(e(i)/e0)/(r-1+(e(i)/e0)^(r*k));
-            Ec(i) = fcc*r/e0*(r-1+(1-r*k)*(e(i)/e0)^(r*k))/(r-1+(e(i)/e0)^(r*k))^2;
+            
+            if e(i) <= eu
+                fc(i) = fcc*r*(e(i)/e0)/(r-1+(e(i)/e0)^(r*k));
+                Ec(i) = fcc*r/e0*(r-1+(1-r*k)*(e(i)/e0)^(r*k))/(r-1+(e(i)/e0)^(r*k))^2;
+            else
+                fc(i) = 0;
+                Ec(i) = 0;
+            end
         end
     else
         if opcionHormigonTrac{1} == 1 % sin resistencia a traccion
