@@ -92,6 +92,7 @@ parametros.Es2 = 0;
 parametros.modeloHormigon = {1 'Saenz'};
 parametros.fc = 30;
 parametros.e0 = 0.002;
+parametros.eu = 0.004;
 parametros.modeloHormigonTrac = {1 'sin traccion'};
 setappdata(handles.figure1,'parametrosMateriales',parametros); %handles.parametros = parametros;
 
